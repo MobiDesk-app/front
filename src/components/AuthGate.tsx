@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useRelay } from "@/lib/relayContext";
 import { api } from "@/lib/api";
 import { DEFAULT_SERVER_URL, loadAuth, normalizeServerUrl } from "@/lib/authStorage";
@@ -39,9 +40,15 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       const result = isRegister
         ? await api.register(server, email.trim(), password)
         : await api.login(server, email.trim(), password);
+      // This component stays mounted while signed in, so reset the form now;
+      // otherwise after "Sign out" it would reappear stuck on "Please wait…"
+      // with the old password still filled in.
+      setPassword("");
+      setShowPassword(false);
       signIn({ serverUrl: server, sessionToken: result.token, email: result.user.email });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
       setBusy(false);
     }
   };
@@ -49,6 +56,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-10">
       <form className="w-full max-w-sm flex flex-col gap-4" onSubmit={submit}>
+        <Link href="/" className="text-sm text-[#6b7280] hover:text-[#b7bec9] self-start">
+          ← Home Relay
+        </Link>
         <div>
           <h1 className="text-2xl font-semibold">{isRegister ? "Create your account" : "Sign in"}</h1>
           <p className="text-sm text-[#8a93a3] mt-1">

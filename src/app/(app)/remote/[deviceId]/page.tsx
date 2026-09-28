@@ -65,7 +65,7 @@ export default function RemoteScreenPage() {
 
   const goBack = () => {
     disconnect();
-    router.push("/");
+    router.push("/devices");
   };
 
   return (

@@ -153,3 +153,14 @@ Type-check: `npx tsc --noEmit` · Lint: `npx eslint` · Production build:
 - Streaming downloads to disk instead of buffering in memory
   (`fileDownloader.ts`'s doc comment covers the File System Access API path
   for Chromium browsers specifically).
+
+## Home page and downloads
+
+`/` is a public landing page (`src/app/page.tsx`) that explains the product
+and offers the downloads. The signed-in app lives under `src/app/(app)/`:
+`/devices`, `/remote/[id]` and `/files/[id]`.
+
+All download links are in **`src/config/downloads.ts`** — put the real URLs
+there when you publish. Empty URLs show "Coming soon". The Android QR code is
+generated at build time from the Play Store URL, and `android.published`
+switches on the "Get it on Google Play" button.

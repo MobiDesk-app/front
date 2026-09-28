@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { RelayProvider } from "@/lib/relayContext";
-import { AuthGate } from "@/components/AuthGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Home Relay",
-  description: "View and control your home PC from the browser.",
+  title: "Home Relay — your PC, from your phone",
+  description:
+    "See your computer's screen, control it, and grab files from your phone or any browser. Install the agent on your PC, link it with a 6-digit code, done.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-[#0c0d10] text-[#f2f4f8]">
         <RelayProvider>
-          <AuthGate>{children}</AuthGate>
+          {children}
         </RelayProvider>
       </body>
     </html>
