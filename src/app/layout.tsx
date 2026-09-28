@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { RelayProvider } from "@/lib/relayContext";
-import { ConnectionGate } from "@/components/ConnectionGate";
+import { AuthGate } from "@/components/AuthGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-[#0c0d10] text-[#f2f4f8]">
         <RelayProvider>
-          <ConnectionGate>{children}</ConnectionGate>
+          <AuthGate>{children}</AuthGate>
         </RelayProvider>
       </body>
     </html>

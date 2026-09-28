@@ -58,15 +58,14 @@ src/
                                  shared as a package
 ```
 
-### Why the settings aren't baked into the build
+### Sign-in
 
-The mobile app and agent both read their backend URL/token from build-time
-env vars (`EXPO_PUBLIC_*` / `.env`), which is fine because only the person
-who builds/installs them ever runs that code. A website is different — its
-URL can end up in anyone's browser. Baking the shared `AUTH_TOKEN` into the
-JS bundle the same way would ship the secret to every visitor. Instead,
-`ConnectionGate` asks for it once at runtime and keeps it only in that
-browser's `localStorage` (see `connectionSettings.ts`).
+The app shows a sign-in / create-account screen (`components/AuthGate.tsx`).
+Signing in returns a per-browser session token from the backend, kept in
+`localStorage` (`lib/authStorage.ts`) — never the password. "Sign out" revokes
+it on the server. The server address defaults to `NEXT_PUBLIC_SERVER_URL`
+(not a secret) and can be changed under "Server settings". PCs are added with
+"Link a PC" and the 6-digit code the agent shows.
 
 ### Why this file exists separately from mobile-app's version
 
@@ -139,9 +138,9 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`, enter your backend's WebSocket URL (e.g.
-`ws://192.168.1.50:8080` — use your PC's LAN IP if testing from another
-device, not `localhost`) and its `AUTH_TOKEN`, and connect.
+Open `http://localhost:3000`, create an account, then press "Link a PC" and
+enter the code shown by the agent. When testing from another device, open
+"Server settings" and use your PC's LAN IP (e.g. `http://192.168.1.50:8080`).
 
 Type-check: `npx tsc --noEmit` · Lint: `npx eslint` · Production build:
 `npm run build`

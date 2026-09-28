@@ -4,8 +4,9 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { SignalingClient } from "./signalingClient";
 import { WebRtcSession } from "./webrtcSession";
 import { ActiveDownload } from "./fileDownloader";
-import { loadConnectionSettings, saveConnectionSettings, clearConnectionSettings } from "./connectionSettings";
-import type { ConnectionSettings } from "./connectionSettings";
+import { loadAuth, saveAuth, clearAuth, toWebSocketUrl } from "./authStorage";
+import type { StoredAuth } from "./authStorage";
+import { api } from "./api";
 import type { PcSummary } from "./protocol/messages";
 import type { InputEvent } from "./protocol/inputEvent";
 import type { FileEntry } from "./protocol/fileProtocol";
@@ -23,9 +24,11 @@ export interface DownloadProgress {
 }
 
 interface RelayContextValue {
-  settings: ConnectionSettings | null;
-  setSettings: (settings: ConnectionSettings) => void;
-  forgetSettings: () => void;
+  /** null = not signed in. `undefined` only during the first client render. */
+  auth: StoredAuth | null | undefined;
+  signIn: (auth: StoredAuth) => void;
+  signOut: () => Promise<void>;
+  refreshDevices: () => void;
   devices: PcSummary[];
   sessionState: SessionState;
   connectedDeviceId: string | null;
@@ -47,7 +50,7 @@ interface PendingList {
 }
 
 export function RelayProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettingsState] = useState<ConnectionSettings | null>(null);
+  const [auth, setAuthState] = useState<StoredAuth | null | undefined>(undefined);
   const [devices, setDevices] = useState<PcSummary[]>([]);
   const [sessionState, setSessionState] = useState<SessionState>("idle");
   const [connectedDeviceId, setConnectedDeviceId] = useState<string | null>(null);
@@ -71,7 +74,7 @@ export function RelayProvider({ children }: { children: React.ReactNode }) {
     // initializer, or the client's first render would mismatch the SSR'd
     // one instead of just rendering the gate once and settling.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSettingsState(loadConnectionSettings());
+    setAuthState(loadAuth());
   }, []);
 
   useEffect(() => {
@@ -79,15 +82,19 @@ export function RelayProvider({ children }: { children: React.ReactNode }) {
   }, [connectedDeviceId]);
 
   useEffect(() => {
-    if (!settings) return;
+    if (!auth) return;
 
     const signaling = new SignalingClient({
-      url: settings.backendUrl,
-      token: settings.authToken,
-      deviceId: "web-1",
-      name: "Web",
+      url: toWebSocketUrl(auth.serverUrl),
+      sessionToken: auth.sessionToken,
     });
     signaling.on("devices", (pcs) => setDevices(pcs));
+    signaling.on("unauthorized", () => {
+      // Signed out elsewhere, or the session expired.
+      clearAuth();
+      setAuthState(null);
+      setDevices([]);
+    });
     signaling.on("error", (message) => setLastError(message));
     signaling.on("signal", (from, payload) => {
       if (sessionRef.current && from === connectedDeviceIdRef.current) {
@@ -103,22 +110,28 @@ export function RelayProvider({ children }: { children: React.ReactNode }) {
       signaling.close();
       signalingRef.current = null;
     };
-  }, [settings]);
+  }, [auth]);
 
-  const setSettings = useCallback((next: ConnectionSettings) => {
-    saveConnectionSettings(next);
-    setSettingsState(next);
+  const signIn = useCallback((next: StoredAuth) => {
+    saveAuth(next);
+    setLastError(null);
+    setAuthState(next);
   }, []);
 
-  const forgetSettings = useCallback(() => {
-    clearConnectionSettings();
+  const signOut = useCallback(async () => {
+    const current = auth;
     sessionRef.current?.close();
     sessionRef.current = null;
-    setSettingsState(null);
+    clearAuth();
+    setAuthState(null);
     setDevices([]);
     setConnectedDeviceId(null);
     setRemoteStream(null);
-  }, []);
+    // Revoke the token on the server too, so it's useless even if copied.
+    if (current) await api.logout(current.serverUrl, current.sessionToken).catch(() => {});
+  }, [auth]);
+
+  const refreshDevices = useCallback(() => signalingRef.current?.requestDevices(), []);
 
   const disconnect = useCallback(() => {
     sessionRef.current?.close();
@@ -229,9 +242,10 @@ export function RelayProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value: RelayContextValue = {
-    settings,
-    setSettings,
-    forgetSettings,
+    auth,
+    signIn,
+    signOut,
+    refreshDevices,
     devices,
     sessionState,
     connectedDeviceId,
