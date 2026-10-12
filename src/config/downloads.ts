@@ -14,7 +14,7 @@ export const downloads = {
   windows: {
     // Upload agent/release/Home-Relay-Agent-Setup.exe to a GitHub release
     // (keep that exact filename) and this link always serves the newest one.
-    url: "https://github.com/ghannemhazem/linko-agent/releases/latest/download/Home-Relay-Agent-Setup.exe",
+    url: "https://github.com/MobiDesk-app/agent/releases/latest/download/Home-Relay-Agent-Setup.exe",
     fileLabel: "Windows 10 / 11 · 64-bit installer (.exe)",
   },
 
