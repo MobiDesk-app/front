@@ -12,8 +12,9 @@ export const downloads = {
   agentVersion: "0.1.0",
 
   windows: {
-    // e.g. "https://github.com/<you>/home-relay/releases/latest/download/Home-Relay-Agent-Setup.exe"
-    url: "",
+    // Upload agent/release/Home-Relay-Agent-Setup.exe to a GitHub release
+    // (keep that exact filename) and this link always serves the newest one.
+    url: "https://github.com/ghannemhazem/linko-agent/releases/latest/download/Home-Relay-Agent-Setup.exe",
     fileLabel: "Windows 10 / 11 · 64-bit installer (.exe)",
   },
 
